@@ -48,16 +48,16 @@ filtered_df = df[df["영화명"] == selected_movie]
 
 
 # [5. 기타 - 구역 나누기]
-# 추후 다른 그래프들을 쉽게 추가할 수 있도록 탭(Tab) 구역을 나눕니다.
-tab1, tab2 = st.tabs(["일별 관객수 추이", "추가 예정 구역"])
+# 탭 구역을 설정합니다.
+tab1, tab2 = st.tabs(["일별 관객수 추이", "누적 관객수 추이"])
 
 
-# [4. 선그래프 그리기]
+# [첫 번째 그래프: 선그래프]
 with tab1:
     st.subheader(f"📈 {selected_movie} - 일자별 관객수 변화")
 
     # Plotly를 이용한 선 그래프 생성
-    fig = px.line(
+    fig1 = px.line(
         filtered_df,
         x="기준일자",
         y="해당일관객수",
@@ -67,14 +67,27 @@ with tab1:
     )
 
     # Streamlit 화면에 그래프 출력
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
-    # [5. 기타 - 설명 문구]
+    # 설명 문구
     st.caption("💡 이 그래프로 알 수 있는 것: 개봉 일자별 관객수 추이 및 흥행 유지 기간을 확인할 수 있습니다.")
 
 
-# 추후 추가할 그래프를 위한 예시 구역
+# [두 번째 그래프: 영역차트]
 with tab2:
-    st.subheader("📌 준비 중인 영역")
-    st.info("여기에 새로운 분석 그래프를 추가할 예정입니다.")
-    # st.caption("💡 이 그래프로 알 수 있는 것: [설명 문구 추가 자리]")
+    st.subheader(f"📊 {selected_movie} - 누적 관객수 변화")
+
+    # Plotly를 이용한 영역 차트(Area Chart) 생성
+    fig2 = px.area(
+        filtered_df,
+        x="기준일자",
+        y="누적관객수",
+        title=f"'{selected_movie}' 누적 관객수 추이",
+        labels={"기준일자": "날짜", "누적관객수": "누적 관객수(명)"},
+    )
+
+    # Streamlit 화면에 그래프 출력
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # 설명 문구
+    st.caption("💡 이 그래프로 알 수 있는 것: 시간이 지남에 따라 관객수가 누적되는 속도와 총 누적 관객수의 증가 곡선을 한눈에 확인할 수 있습니다.")
