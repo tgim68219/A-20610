@@ -1,26 +1,80 @@
+import pandas as pd
+import plotly.express as px
 import streamlit as st
-st.title("나의 데이터 과학 포트폴리오")
-st.write("반갑습니다! 이제부터 여기에 제 작업을 기록합니다.")
-어제의 박스오피스를 보여 주는 스트림릿 앱 하나(main.py)를 만들어 줘. 
-스트림릿 클라우드에 올릴 거야. 아래에 공식 API 문서에서 복사한 내용을 붙였어.
 
-- 인증키는 비밀 금고(secrets)의 KOBIS_KEY에서 불러와. 코드에는 절대 쓰지 마.
-- 조회 날짜는 고정하지 말고 '어제'를 자동으로 계산해서 써. 오늘 건 아직 집계 전이거든.
-  '어제'는 한국 시간 기준이야. 배포 서버 시계는 한국 시간이 아니야.
-- 순위·영화명·개봉일·관객수·누적관객·스크린수를 표로 보여 줘.
-- 1위 영화는 지표 카드 세 장으로 크게, 관객수 상위 5편은 막대그래프로.
-- 숫자가 글자로 오니 숫자로 바꿔서 정렬과 그래프에 써 줘.
-- 같은 날짜를 다시 물으면 API를 또 부르지 말고, 불러온 결과를 한 시간쯤 기억해 줘.
-- 요청이 실패하거나, 오류 상자(faultInfo)가 오거나, 영화 목록이 비어서 올 때는
-  빈 화면 대신 무엇을 확인해야 하는지 한국어로 안내해 줘.
-- 필요한 라이브러리 목록(requirements.txt)도 같이 줘. 버전 숫자 없이 이름만.
-- 초보자용 한국어 주석을 달고 main.py 전체 코드를 한 번에 줘.
 
-──── 아래는 KOBIS 공식 문서에서 복사한 부분 ────
-요청 주소: https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json
-요청변수: key(발급받은 인증키) · targetDt(조회 날짜, yyyymmdd 여덟 자리)
-응답 구조: boxOfficeResult 안의 dailyBoxOfficeList 목록에 영화별로
-  rank(순위) · rankInten(전날 대비 순위 증감) · movieNm(영화명) · openDt(개봉일) ·
-  audiCnt(그날 관객수) · audiAcc(누적 관객수) · scrnCnt(스크린수) · showCnt(상영횟수)
-  ※ 숫자 값이 전부 문자열로 온다.
-  ※ 인증키가 틀려도 상태코드는 200이고, 대신 faultInfo 상자가 온다.
+# [1. 데이터 불러오기]
+# @st.cache_data 데코레이터를 사용하여 데이터를 캐싱(재사용)합니다.
+# 앱이 실행될 때 매번 새로 다운로드하지 않아 속도가 빨라집니다.
+@st.cache_data
+def load_data():
+    url = "https://raw.githubusercontent.com/keep-growing-park/data-science/refs/heads/main/dataset/kobis_1year_boxoffice.csv"
+    df = pd.read_csv(url)
+
+    # [2. 날짜 전처리]
+    # 결측치(값이 없는 데이터)가 포함된 행을 삭제합니다.
+    df = df.dropna()
+
+    # '기준일자' 컬럼을 datetime(날짜) 형식으로 변환합니다.
+    df["기준일자"] = pd.to_datetime(df["기준일자"])
+
+    # 전체 데이터를 기준일자 오름차순으로 정렬합니다.
+    df = df.sort_values(by="기준일자")
+
+    return df
+
+
+# 웹앱 제목 설정
+st.title("🎬 영화 박스오피스 데이터 분석")
+
+# 데이터 로드
+df = load_data()
+
+# [3. 영화 선택 기능]
+# '영화명'별 '누적관객수'의 최댓값을 구해 내림차순 정렬합니다.
+movie_order = (
+    df.groupby("영화명")["누적관객수"]
+    .max()
+    .sort_values(ascending=False)
+    .index.tolist()
+)
+
+# 사이드바에 영화 선택 드롭다운 생성 (기본값: 첫 번째 영화)
+st.sidebar.header("🔍 옵션 선택")
+selected_movie = st.sidebar.selectbox("영화를 선택하세요:", movie_order)
+
+# 선택한 영화의 데이터만 필터링합니다.
+filtered_df = df[df["영화명"] == selected_movie]
+
+
+# [5. 기타 - 구역 나누기]
+# 추후 다른 그래프들을 쉽게 추가할 수 있도록 탭(Tab) 구역을 나눕니다.
+tab1, tab2 = st.tabs(["일별 관객수 추이", "추가 예정 구역"])
+
+
+# [4. 선그래프 그리기]
+with tab1:
+    st.subheader(f"📈 {selected_movie} - 일자별 관객수 변화")
+
+    # Plotly를 이용한 선 그래프 생성
+    fig = px.line(
+        filtered_df,
+        x="기준일자",
+        y="해당일관객수",
+        title=f"'{selected_movie}' 일자별 관객수 추이",
+        labels={"기준일자": "날짜", "해당일관객수": "관객수(명)"},
+        markers=True,  # 데이터 포인트에 점 표시
+    )
+
+    # Streamlit 화면에 그래프 출력
+    st.plotly_chart(fig, use_container_width=True)
+
+    # [5. 기타 - 설명 문구]
+    st.caption("💡 이 그래프로 알 수 있는 것: 개봉 일자별 관객수 추이 및 흥행 유지 기간을 확인할 수 있습니다.")
+
+
+# 추후 추가할 그래프를 위한 예시 구역
+with tab2:
+    st.subheader("📌 준비 중인 영역")
+    st.info("여기에 새로운 분석 그래프를 추가할 예정입니다.")
+    # st.caption("💡 이 그래프로 알 수 있는 것: [설명 문구 추가 자리]")
