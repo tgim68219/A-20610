@@ -83,7 +83,6 @@ st.divider()
 # ---------------------------------------------------------
 st.subheader("3. 총 관객 수 분포")
 
-# 히스토그램 생성
 fig3 = px.histogram(
     df,
     x="total_audi",
@@ -98,14 +97,47 @@ fig3.update_traces(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 최다 관객 영화 정보 동적 추출
 top_movie_idx = df["total_audi"].idxmax()
 top_movie_name = df.loc[top_movie_idx, "movieNm"]
 top_movie_audi = df.loc[top_movie_idx, "total_audi"]
 
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** "
+    f"대부분의 영화가 하위 관객 수 구간에 집중되어 있는 오른쪽으로 긴 꼬리 분포를 보이며, "
+    f"가장 많은 관객을 동원한 영화는 **'{top_movie_name}'**(총 {top_movie_audi:,.0f}명)입니다."
+)
+
+st.divider()
+
+# ---------------------------------------------------------
+# 네 번째 그래프: 개봉일 스크린 수 vs 총 관객 수 (산점도)
+# ---------------------------------------------------------
+st.subheader("4. 개봉일 스크린 수와 총 관객 수의 관계")
+
+# 산점도 생성 (장르별 색상 구획 및 hover_name 설정)
+fig4 = px.scatter(
+    df,
+    x="first_scrn",
+    y="total_audi",
+    color="genre",
+    hover_name="movieNm",
+    title="개봉일 스크린 수 vs 총 관객 수 산점도",
+    labels={
+        "first_scrn": "개봉일 스크린 수",
+        "total_audi": "총 관객 수",
+        "genre": "장르",
+    },
+)
+
+# 툴팁 형식 지정
+fig4.update_traces(
+    hovertemplate="<b>%{hovertext}</b><br>개봉일 스크린 수: %{x:,}개<br>총 관객 수: %{y:,.0f}명<extra></extra>"
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
 # 그래프 설명 구역
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** "
-    f"대부분의 영화가 하위 관객 수 구간(소형~중형 흥행작)에 집중되어 있는 오른쪽으로 긴 꼬리 분포를 보이며, "
-    f"가장 많은 관객을 동원한 영화는 **'{top_movie_name}'**(총 {top_movie_audi:,.0f}명)입니다."
+    "초기 확보한 스크린 수가 많을수록 최종 총 관객 수가 증가하는 양의 상관관계를 보이지만, 스크린 수가 적어도 입소문을 통해 높은 관객 수를 기록한 예외적인 성과작도 함께 확인할 수 있습니다."
 )
