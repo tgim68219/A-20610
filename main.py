@@ -28,11 +28,9 @@ df = load_data()
 # ---------------------------------------------------------
 st.subheader("1. 장르별 영화 편수 비율")
 
-# 장르별 빈도 계산
 genre_counts = df["genre"].value_counts().reset_index()
 genre_counts.columns = ["장르", "편수"]
 
-# Plotly 도넛 그래프 생성
 fig1 = px.pie(
     genre_counts,
     values="편수",
@@ -41,14 +39,12 @@ fig1 = px.pie(
     title="장르별 영화 분포",
 )
 
-# 호버 툴팁 설정 (편수 및 비율 표시)
 fig1.update_traces(
     hovertemplate="<b>%{label}</b><br>편수: %{value}편<br>비율: %{percent}"
 )
 
 st.plotly_chart(fig1, use_container_width=True)
 
-# 그래프 설명 구역
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** "
     "박스오피스 상위권 영화 중 특정 장르가 차지하는 비중을 한눈에 파악할 수 있습니다."
@@ -61,7 +57,6 @@ st.divider()
 # ---------------------------------------------------------
 st.subheader("2. 장르 및 개별 영화별 총 관객 수")
 
-# Plotly 트리맵 생성 (장르 > 영화명 계층, 크기는 total_audi)
 fig2 = px.treemap(
     df,
     path=[px.Constant("전체"), "genre", "movieNm"],
@@ -70,15 +65,47 @@ fig2 = px.treemap(
     color="genre",
 )
 
-# 마우스 호버 시 영화명과 총 관객 수가 명확히 표시되도록 툴팁 설정
 fig2.update_traces(
     hovertemplate="<b>%{label}</b><br>총 관객 수: %{value:,.0f}명<extra></extra>"
 )
 
 st.plotly_chart(fig2, use_container_width=True)
 
-# 그래프 설명 구역
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** "
     "어떤 장르가 가장 많은 관객을 끌어모았는지뿐만 아니라, 특정 대형 히트작이 해당 장르 전체 관객 수에 미친 영향력까지 확인할 수 있습니다."
+)
+
+st.divider()
+
+# ---------------------------------------------------------
+# 세 번째 그래프: 총 관객 수 분포 (히스토그램)
+# ---------------------------------------------------------
+st.subheader("3. 총 관객 수 분포")
+
+# 히스토그램 생성
+fig3 = px.histogram(
+    df,
+    x="total_audi",
+    nbins=30,
+    title="총 관객 수 히스토그램",
+    labels={"total_audi": "총 관객 수"},
+)
+
+fig3.update_traces(
+    hovertemplate="관객 수 구간: %{x}<br>영화 수: %{y}편<extra></extra>"
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 최다 관객 영화 정보 동적 추출
+top_movie_idx = df["total_audi"].idxmax()
+top_movie_name = df.loc[top_movie_idx, "movieNm"]
+top_movie_audi = df.loc[top_movie_idx, "total_audi"]
+
+# 그래프 설명 구역
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** "
+    f"대부분의 영화가 하위 관객 수 구간(소형~중형 흥행작)에 집중되어 있는 오른쪽으로 긴 꼬리 분포를 보이며, "
+    f"가장 많은 관객을 동원한 영화는 **'{top_movie_name}'**(총 {top_movie_audi:,.0f}명)입니다."
 )
