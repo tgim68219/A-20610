@@ -251,3 +251,39 @@ st.info(
     "💡 **이 그래프로 알 수 있는 것:** "
     "제작 국가(안쪽 링)에 따른 주요 장르(바깥쪽 링)의 구성 비율을 계층적으로 파악할 수 있으며, 특정 국가에서 주로 제작/개봉된 주요 장르가 무엇인지 한눈에 비교할 수 있습니다."
 )
+
+st.divider()
+
+# ---------------------------------------------------------
+# 여덟 번째 그래프: 개봉일 상영횟수 vs 총 관객 수 (산점도)
+# ---------------------------------------------------------
+question_title = "개봉일 상영횟수가 많은 영화는 총 관객도 많은가"
+st.subheader(f"8. {question_title}")
+
+# 가로축은 first_show(개봉일 상영횟수), 세로축은 total_audi(총 관객)
+fig8 = px.scatter(
+    df,
+    x="first_show",
+    y="total_audi",
+    color="genre",
+    hover_name="movieNm",
+    title=question_title,
+    labels={
+        "first_show": "개봉일 상영횟수",
+        "total_audi": "총 관객 수",
+        "genre": "장르",
+    },
+)
+
+# 점에 마우스를 올리면 영화명이 보이게
+fig8.update_traces(
+    hovertemplate="<b>%{hovertext}</b><br>개봉일 상영횟수: %{x:,}회<br>총 관객 수: %{y:,.0f}명<extra></extra>"
+)
+
+st.plotly_chart(fig8, use_container_width=True)
+
+# 그래프 설명 구역
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** "
+    "개봉일 상영횟수가 많은 영화일수록 총 관객 수가 늘어나는 강한 양의 상관관계를 보이며, 개봉 첫날 극장가를 얼마나 많이 점유했는지가 최종 흥행 실적을 결정짓는 핵심 요인 중 하나임을 알 수 있습니다."
+)
