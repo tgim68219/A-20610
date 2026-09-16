@@ -114,7 +114,6 @@ st.divider()
 # ---------------------------------------------------------
 st.subheader("4. 개봉일 스크린 수와 총 관객 수의 관계")
 
-# 산점도 생성 (장르별 색상 구획 및 hover_name 설정)
 fig4 = px.scatter(
     df,
     x="first_scrn",
@@ -129,15 +128,48 @@ fig4 = px.scatter(
     },
 )
 
-# 툴팁 형식 지정
 fig4.update_traces(
     hovertemplate="<b>%{hovertext}</b><br>개봉일 스크린 수: %{x:,}개<br>총 관객 수: %{y:,.0f}명<extra></extra>"
 )
 
 st.plotly_chart(fig4, use_container_width=True)
 
-# 그래프 설명 구역
 st.info(
     "💡 **이 그래프로 알 수 있는 것:** "
     "초기 확보한 스크린 수가 많을수록 최종 총 관객 수가 증가하는 양의 상관관계를 보이지만, 스크린 수가 적어도 입소문을 통해 높은 관객 수를 기록한 예외적인 성과작도 함께 확인할 수 있습니다."
+)
+
+st.divider()
+
+# ---------------------------------------------------------
+# 다섯 번째 그래프: 주요 장르별 총 관객 수 (박스플롯)
+# ---------------------------------------------------------
+st.subheader("5. 주요 장르별 총 관객 수 분포 (10편 이상 장르)")
+
+# 영화가 10편 이상 포함된 장르 추출 및 필터링
+genre_counts_series = df["genre"].value_counts()
+major_genres = genre_counts_series[genre_counts_series >= 10].index
+df_major = df[df["genre"].isin(major_genres)]
+
+# 박스플롯 생성 (hover_name으로 마우스 호버 시 영화명 표시, points="outliers" 또는 "all" 설정)
+fig5 = px.box(
+    df_major,
+    x="genre",
+    y="total_audi",
+    color="genre",
+    hover_name="movieNm",
+    points="outliers",
+    title="영화 10편 이상 주요 장르의 총 관객 수 상자 그림",
+    labels={"genre": "장르", "total_audi": "총 관객 수"},
+)
+
+fig5.update_traces(
+    hovertemplate="<b>%{hovertext}</b><br>관객 수: %{y:,.0f}명<extra></extra>"
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** "
+    "장르별 관객 수의 중앙값과 범위를 비교할 수 있으며, 상자 밖의 이상치(Outlier) 점들을 통해 장르 내에서 이례적인 대형 흥행 기록을 세운 대표작들을 식별할 수 있습니다."
 )
